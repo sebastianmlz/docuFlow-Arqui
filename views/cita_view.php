@@ -232,9 +232,9 @@ class cita_view
 											$idBloque = (int)($bloque['id'] ?? 0);
 											$ini = (string)($bloque['hora_inicio'] ?? '');
 											$fin = (string)($bloque['hora_fin'] ?? '');
-											$cupos = (int)($bloque['cantidad_cupos'] ?? 0);
+											// $cupos = (int)($bloque['cantidad_cupos'] ?? 0);
 										?>
-										<option value="<?php echo $idBloque; ?>"><?php echo htmlspecialchars($ini . ' - ' . $fin . ' (Cupos: ' . $cupos . ')'); ?></option>
+										<option value="<?php echo $idBloque; ?>"><?php echo htmlspecialchars($ini . ' - ' . $fin ); ?></option>
 									<?php endforeach; ?>
 								</select>
 							</div>

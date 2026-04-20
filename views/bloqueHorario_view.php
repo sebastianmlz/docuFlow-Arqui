@@ -237,10 +237,10 @@ class bloqueHorario_view
 							<?php foreach ($this->listaPeriodos as $periodo): ?>
 								<?php
 									$idPeriodo = (int)($periodo['id'] ?? 0);
-									$gestion = (string)($periodo['gestion'] ?? '');
+									// $gestion = (string)($periodo['gestion'] ?? '');
 									$semestre = (string)($periodo['semestre'] ?? '');
 								?>
-								<option value="<?php echo $idPeriodo; ?>" <?php echo $this->idPerSel === $idPeriodo ? 'selected' : ''; ?>><?php echo htmlspecialchars($gestion . ' - ' . $semestre); ?></option>
+								<option value="<?php echo $idPeriodo; ?>" <?php echo $this->idPerSel === $idPeriodo ? 'selected' : ''; ?>><?php echo htmlspecialchars($semestre); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</div>
@@ -276,7 +276,7 @@ class bloqueHorario_view
 								$fin = (string)($bloque['hora_fin'] ?? '');
 								$cupos = (int)($bloque['cantidad_cupos'] ?? 0);
 								$idPeriodo = (int)($bloque['idperiodo'] ?? 0);
-								$gestion = (string)($bloque['gestion'] ?? '');
+								// $gestion = (string)($bloque['gestion'] ?? '');
 								$semestre = (string)($bloque['semestre'] ?? '');
 							?>
 							<tr>
@@ -284,7 +284,7 @@ class bloqueHorario_view
 								<td><?php echo htmlspecialchars($ini); ?></td>
 								<td><?php echo htmlspecialchars($fin); ?></td>
 								<td><?php echo $cupos; ?></td>
-								<td><?php echo htmlspecialchars($gestion . ' - ' . $semestre); ?></td>
+								<td><?php echo htmlspecialchars( $semestre); ?></td>
 								<td>
 									<div class="acciones">
 										<form method="post" action="index.php?accion_usuario=gestion_bloquehorario" style="margin:0;">
