@@ -2,15 +2,15 @@
 
 class RecepcionMemento
 {
-	private array $estadoFormulario;
+    private array $estado; 
 
-	public function __construct(array $estadoFormulario)
-	{
-		$this->estadoFormulario = $estadoFormulario;
-	}
+    public function __construct(array $estado)
+    {
+        $this->estado = $estado;
+    }
 
-	public function obtenerEstado(): array
-	{
-		return $this->estadoFormulario;
-	}
+    public function GetState(): array
+    {
+        return $this->estado;
+    }
 }
