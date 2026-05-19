@@ -14,6 +14,7 @@ class cita_view
 	public int $idCitaRecepcion = 0;
 	public string $tituloAccion;
 	public string $colorAlerta;
+	public array $datosRestaurados;
 
 	public function __construct()
 	{
@@ -27,6 +28,7 @@ class cita_view
 		$this->recepcionAbierta = false;
 		$this->tituloAccion = 'Gestionar Cita';
 		$this->colorAlerta = '#eaf2fe';
+		$this->datosRestaurados = array();
 	}
 
 	public function sincronizar(array $datos): void
@@ -41,6 +43,7 @@ class cita_view
 		$this->recepcionAbierta = (bool)($datos['recepcionAbierta'] ?? false);
 		$this->citaActiva = (array)($datos['citaActiva'] ?? array());
 		$this->idCitaRecepcion = (int)($datos['idCitaRecepcion'] ?? 0);
+		$this->datosRestaurados = (array)($datos['datosRestaurados'] ?? array());
 	}
 
 	public function listar(array $lista): void
@@ -75,6 +78,7 @@ class cita_view
 	private function render(string $msg): void
 	{
 		$ruta = $this->vistaEjecutivo ? 'gestion_cita' : 'mis_citas';
+		$datosRestaurados = $this->datosRestaurados;
 		?>
 <!DOCTYPE html>
 <html lang="es">
@@ -145,6 +149,10 @@ class cita_view
 		.btn-primary { background: var(--primary); color: #fff; }
 		.btn-danger { background: #fdecec; color: var(--danger); }
 		.btn-light { background: #edf1f6; color: #1f2937; }
+		.btn-success { background: #16a34a; color: #fff; }
+		.btn-warning { background: #facc15; color: #1f2937; }
+		.btn-info { background: #0ea5e9; color: #fff; }
+		.btn-gray { background: #e5e7eb; color: #1f2937; }
 		table {
 			width: 100%;
 			border-collapse: collapse;
@@ -297,7 +305,6 @@ class cita_view
 				<?php if ($this->recepcionAbierta && $this->idCitaRecepcion > 0): ?>
 					<h3 style="margin-top:18px;">Recepcion de documentos para cita #<?php echo $this->idCitaRecepcion; ?></h3>
 					<form method="post" action="index.php?accion_usuario=<?php echo htmlspecialchars($ruta); ?>">
-						<input type="hidden" name="accion_cita" value="guardar_recepcion" />
 						<input type="hidden" name="id_cita" value="<?php echo $this->idCitaRecepcion; ?>" />
 
 						<table>
@@ -313,18 +320,23 @@ class cita_view
 									<?php
 										$idDoc = (int)($doc['id'] ?? 0);
 										$nombreDoc = (string)($doc['nombre'] ?? '');
+										$entregaRestaurada = !empty($datosRestaurados['entrega'][$idDoc]);
+										$obsRestaurada = (string)($datosRestaurados['obs'][$idDoc] ?? '');
 									?>
 									<tr>
 										<td><?php echo htmlspecialchars($nombreDoc); ?></td>
-										<td><input type="checkbox" name="entrega[<?php echo $idDoc; ?>]" value="1" /></td>
-										<td><textarea name="obs[<?php echo $idDoc; ?>]" placeholder="Observacion"></textarea></td>
+										<td><input type="checkbox" name="entrega[<?php echo $idDoc; ?>]" value="1" <?php echo $entregaRestaurada ? 'checked' : ''; ?> /></td>
+										<td><textarea name="obs[<?php echo $idDoc; ?>]" placeholder="Observacion"><?php echo htmlspecialchars($obsRestaurada); ?></textarea></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
 						</table>
 
 						<div class="acciones" style="margin-top:12px;">
-							<button class="btn btn-primary" type="submit">Guardar recepcion</button>
+							<button class="btn btn-gray" type="submit" name="action" value="guardar_estado">Guardar borrador</button>
+							<button class="btn btn-warning" type="submit" name="action" value="deshacer">Deshacer</button>
+							<button class="btn btn-info" type="submit" name="action" value="rehacer">Rehacer</button>
+							<button class="btn btn-success" type="submit" name="action" value="guardar_recepcion">Guardar recepcion</button>
 						</div>
 					</form>
 

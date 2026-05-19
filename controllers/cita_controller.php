@@ -5,6 +5,8 @@ require_once __DIR__ . '/../models/documento_model.php';
 require_once __DIR__ . '/../models/modulo_model.php';
 require_once __DIR__ . '/../models/bloqueHorario_model.php';
 require_once __DIR__ . '/../views/cita_view.php';
+require_once __DIR__ . '/../RecepcionMemento.php';
+require_once __DIR__ . '/../RecepcionCaretaker.php';
 
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
@@ -29,6 +31,7 @@ class cita_controller
 	private modulo_model $mModulo;
 	private bloqueHorario_model $mBloque;
 	private cita_view $vCita;
+	private RecepcionCaretaker $historial;
 
 	private bool $vistaPostulante;
 	private bool $vistaEjecutivo;
@@ -40,6 +43,7 @@ class cita_controller
 	private array $citaActiva;
 	private bool $recepcionAbierta;
 	private int $idCitaRecepcion;
+	private array $datosRestaurados;
 
 	public function __construct()
 	{
@@ -51,6 +55,7 @@ class cita_controller
 		$this->mModulo = new modulo_model();
 		$this->mBloque = new bloqueHorario_model();
 		$this->vCita = new cita_view();
+		$this->historial = new RecepcionCaretaker();
 
 		$this->vistaPostulante = $rol === 'postulante';
 		$this->vistaEjecutivo = $rol === 'ejecutivo';
@@ -62,6 +67,7 @@ class cita_controller
 		$this->citaActiva = array();
 		$this->recepcionAbierta = false;
 		$this->idCitaRecepcion = 0;
+		$this->datosRestaurados = array();
 	}
 
 	public function iniciar(): void
@@ -119,14 +125,14 @@ class cita_controller
 		$this->listaBloques = array();
 		$this->citaActiva = array();
 		$this->idCitaActiva = 0;
+		$this->recepcionAbierta = $idCita > 0;
+		$this->idCitaRecepcion = $idCita > 0 ? $idCita : 0;
 
 		if ($idCita > 0) {
-			$this->recepcionAbierta = true;
-			$this->idCitaRecepcion = $idCita;
+			// limpiar historial al abrir una recepcion nueva
+			$this->historial->limpiar();
 			$msg = 'Completa la recepcion documental de la cita seleccionada.';
 		} else {
-			$this->recepcionAbierta = false;
-			$this->idCitaRecepcion = 0;
 			$msg = 'Selecciona una cita valida para abrir recepcion.';
 		}
 
@@ -140,6 +146,7 @@ class cita_controller
 		$idCita = (int)$idCita;
 		$arrayDetalles = array();
 		$msg = '';
+		$this->datosRestaurados = array();
 
 		foreach ($this->mDocumento->listar() as $doc) {
 			$idDocumento = (int)($doc['id'] ?? 0);
@@ -164,6 +171,7 @@ class cita_controller
 			$okDetalle = $this->mDetalle->guardarLote($idCita, $arrayDetalles);
 			$okEstado = $okDetalle ? $this->mCita->actualizarEstado($idCita, 1) : false;
 			$msg = ($okDetalle && $okEstado) ? 'Recepcion guardada correctamente.' : 'No se pudo guardar la recepcion.';
+			// historial se limpiará al abrir la siguiente recepcion
 		}
 
 		// Paso 2 (Logica)
@@ -183,6 +191,7 @@ class cita_controller
 		$docs = $this->mDocumento->listar();
 
 		// Paso 2 (Logica)
+		$this->historial->limpiar();
 		$this->listaCitasHoy = $lista;
 		$this->listaDocs = $docs;
 		$this->listaModulos = array();
@@ -199,6 +208,7 @@ class cita_controller
 
 	private function refrescarDatos(): void
 	{
+		$this->datosRestaurados = array();
 		if ($this->vistaPostulante) {
 			$idPostulante = (int)($_SESSION['usuario_id'] ?? 0);
 			$cita = $this->mCita->obtenerActiva($idPostulante);
@@ -234,12 +244,87 @@ class cita_controller
 			'listaDocs' => $this->listaDocs,
 			'listaModulos' => $this->listaModulos,
 			'listaBloques' => $this->listaBloques,
+			'datosRestaurados' => $this->datosRestaurados,
 		));
+	}
+
+	private function prepararRecepcion(int $idCita): void
+	{
+		$this->listaCitasHoy = $this->mCita->listarHoy();
+		$this->listaDocs = $this->mDocumento->listar();
+		$this->listaModulos = array();
+		$this->listaBloques = array();
+		$this->citaActiva = array();
+		$this->idCitaActiva = 0;
+		$this->recepcionAbierta = $idCita > 0;
+		$this->idCitaRecepcion = $idCita > 0 ? $idCita : 0;
+	}
+
+	public function guardarEstadoTemporal(array $datos): void
+	{
+		$memento = new RecepcionMemento($datos);
+		$this->historial->guardarEstado($memento);
+		$this->datosRestaurados = $memento->obtenerEstado();
+
+		$idCita = (int)($this->datosRestaurados['id_cita'] ?? 0);
+		$this->prepararRecepcion($idCita);
+
+		$this->sincronizarVista();
+		$this->vCita->abrirRecepcion('Borrador guardado.');
+	}
+
+	public function deshacerEstado(array $datos): void
+	{
+		$memento = $this->historial->deshacer();
+		$estadoActual = array(
+			'id_cita' => (int)($datos['id_cita'] ?? 0),
+			'entrega' => (array)($datos['entrega'] ?? array()),
+			'obs' => (array)($datos['obs'] ?? array()),
+		);
+		$this->datosRestaurados = $memento ? $memento->obtenerEstado() : $estadoActual;
+		$idCita = (int)($this->datosRestaurados['id_cita'] ?? ($datos['id_cita'] ?? 0));
+		$this->prepararRecepcion($idCita);
+
+		$msg = $memento ? 'Estado anterior restaurado.' : 'No hay estados para deshacer.';
+		$this->sincronizarVista();
+		$this->vCita->abrirRecepcion($msg);
+	}
+
+	public function rehacerEstado(array $datos): void
+	{
+		$memento = $this->historial->rehacer();
+		$estadoActual = array(
+			'id_cita' => (int)($datos['id_cita'] ?? 0),
+			'entrega' => (array)($datos['entrega'] ?? array()),
+			'obs' => (array)($datos['obs'] ?? array()),
+		);
+		$this->datosRestaurados = $memento ? $memento->obtenerEstado() : $estadoActual;
+		$idCita = (int)($this->datosRestaurados['id_cita'] ?? ($datos['id_cita'] ?? 0));
+		$this->prepararRecepcion($idCita);
+
+		$msg = $memento ? 'Estado futuro restaurado.' : 'No hay estados para rehacer.';
+		$this->sincronizarVista();
+		$this->vCita->abrirRecepcion($msg);
 	}
 }
 
 $controlador = new cita_controller();
-$accion = trim((string)($_POST['accion_cita'] ?? $_GET['accion_cita'] ?? ''));
+$accion = trim((string)($_POST['accion_cita'] ?? $_GET['accion_cita'] ?? $_POST['action'] ?? $_GET['action'] ?? ''));
+
+if ($accion === 'guardar_estado') {
+	$controlador->guardarEstadoTemporal($_POST);
+	exit;
+}
+
+if ($accion === 'deshacer') {
+	$controlador->deshacerEstado($_POST);
+	exit;
+}
+
+if ($accion === 'rehacer') {
+	$controlador->rehacerEstado($_POST);
+	exit;
+}
 
 if ($accion === 'reservar') {
 	$idBloque = (int)($_POST['id_bloque'] ?? 0);
