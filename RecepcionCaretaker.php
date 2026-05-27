@@ -9,35 +9,40 @@ class RecepcionCaretaker
             session_start();
         }
 
-        if (!isset($_SESSION['undo_stack']) || !is_array($_SESSION['undo_stack'])) {
-            $_SESSION['undo_stack'] = array();
+        if (!isset($_SESSION['mementos']) || !is_array($_SESSION['mementos'])) {
+            $_SESSION['mementos'] = array();
         }
 
-        if (!isset($_SESSION['redo_stack']) || !is_array($_SESSION['redo_stack'])) {
-            $_SESSION['redo_stack'] = array();
+        if (!isset($_SESSION['memento_index']) || !is_int($_SESSION['memento_index'])) {
+            $_SESSION['memento_index'] = -1;
         }
     }
 
     public function Add(RecepcionMemento $memento): void
     {
-        $_SESSION['undo_stack'][] = $memento->GetState();
-        $_SESSION['redo_stack'] = array();
+        $mementos = &$_SESSION['mementos'];
+        $index = &$_SESSION['memento_index'];
+
+        if ($index >= 0 && $index < count($mementos) - 1) {
+            $mementos = array_slice($mementos, 0, $index + 1);
+        }
+
+        $mementos[] = $memento->GetState();
+        $index = count($mementos) - 1;
     }
 
-    // obtener paso anterior
+    // deshacer
     public function GetUndo(): ?RecepcionMemento
     {
-        $undoStack = &$_SESSION['undo_stack'];
-        $redoStack = &$_SESSION['redo_stack'];
+        $mementos = &$_SESSION['mementos'];
+        $index = &$_SESSION['memento_index'];
 
-        if (count($undoStack) <= 1) {
+        if ($index <= 0) {
             return null;
         }
 
-        $ultimo = array_pop($undoStack);
-        $redoStack[] = $ultimo;
-
-        $estado = $undoStack[count($undoStack) - 1];
+        $index--;
+        $estado = $mementos[$index];
         if (!is_array($estado)) {
             $this->limpiar();
             return null;
@@ -45,28 +50,28 @@ class RecepcionCaretaker
         return new RecepcionMemento($estado);
     }
 
-    // obtener paso siguiente
+    // rehacer
     public function GetRedo(): ?RecepcionMemento
     {
-        $redoStack = &$_SESSION['redo_stack'];
+        $mementos = &$_SESSION['mementos'];
+        $index = &$_SESSION['memento_index'];
 
-        if (count($redoStack) === 0) {
+        if ($index >= count($mementos) - 1) {
             return null;
         }
 
-        $estado = array_pop($redoStack);
+        $index++;
+        $estado = $mementos[$index];
         if (!is_array($estado)) {
             $this->limpiar();
             return null;
         }
-        $_SESSION['undo_stack'][] = $estado;
-
         return new RecepcionMemento($estado);
     }
 
     public function limpiar(): void
     {
-        $_SESSION['undo_stack'] = array();
-        $_SESSION['redo_stack'] = array();
+        $_SESSION['mementos'] = array();
+        $_SESSION['memento_index'] = -1;
     }
 }
