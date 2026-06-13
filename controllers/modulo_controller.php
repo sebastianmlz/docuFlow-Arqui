@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../models/modulo_model.php';
 require_once __DIR__ . '/../views/modulo_view.php';
+require_once __DIR__ . '/../Caretaker.php';
+require_once __DIR__ . '/../Originator.php';
 
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
@@ -21,6 +23,8 @@ class modulo_controller
 {
 	private modulo_model $mModulo;
 	private modulo_view $vModulo;
+	private Caretaker $caretaker;
+	private Originator $originator;
 	private array $lista;
 	private bool $modoEdicion;
 	private int $idSeleccionado;
@@ -30,6 +34,8 @@ class modulo_controller
 	{
 		$this->mModulo = new modulo_model();
 		$this->vModulo = new modulo_view();
+		$this->caretaker = new Caretaker();
+		$this->originator = new Originator();
 		$this->lista = array();
 		$this->modoEdicion = false;
 		$this->idSeleccionado = 0;
@@ -101,7 +107,77 @@ class modulo_controller
 		$this->modoEdicion = true;
 		$this->idSeleccionado = (int)$id;
 		$this->nombreSeleccionado = (string)$nombre;
+		$this->caretaker->limpiar();
 		$this->iniciar();
+	}
+
+	public function limpiarHistorial(): void
+	{
+		$this->caretaker->limpiar();
+	}
+
+	public function guardarEstadoTemporal(array $datos): void
+	{
+		$this->originator->SetState($datos);
+		$memento = $this->originator->CreateMemento();
+		$this->caretaker->Add($memento);
+
+		$estado = $this->originator->GetState();
+		$this->aplicarEstado($estado);
+		$this->listar();
+		$this->sincronizarVista();
+		$msg = 'Borrador del modulo guardado correctamente.';
+		if ($this->modoEdicion) {
+			$this->vModulo->actualizar($msg);
+			return;
+		}
+
+		$this->vModulo->insertar($msg);
+	}
+
+	public function deshacerEstado(array $datos): void
+	{
+		$memento = $this->caretaker->GetUndo();
+
+		if ($memento !== null) {
+			$this->originator->RestoreMemento($memento);
+			$msg = 'Estado anterior del modulo restaurado correctamente.';
+		} else {
+			$this->originator->SetState($datos);
+			$msg = 'No hay estados del modulo para deshacer.';
+		}
+
+		$estado = $this->originator->GetState();
+		$this->aplicarEstado($estado);
+		$this->listar();
+		$this->sincronizarVista();
+		$this->vModulo->actualizar($msg);
+	}
+
+	public function rehacerEstado(array $datos): void
+	{
+		$memento = $this->caretaker->GetRedo();
+
+		if ($memento !== null) {
+			$this->originator->RestoreMemento($memento);
+			$msg = 'Estado futuro del modulo restaurado correctamente.';
+		} else {
+			$this->originator->SetState($datos);
+			$msg = 'No hay estados del modulo para rehacer.';
+		}
+
+		$estado = $this->originator->GetState();
+		$this->aplicarEstado($estado);
+		$this->listar();
+		$this->sincronizarVista();
+		$this->vModulo->actualizar($msg);
+	}
+
+	private function aplicarEstado(array $estado): void
+	{
+		$this->idSeleccionado = (int)($estado['id_modulo'] ?? 0);
+		$this->nombreSeleccionado = (string)($estado['nombre_modulo'] ?? '');
+		$this->modoEdicion = $this->idSeleccionado > 0;
 	}
 
 	private function sincronizarVista(): void
@@ -116,7 +192,23 @@ class modulo_controller
 $controlador = new modulo_controller();
 $accionModulo = trim((string)($_POST['accion_modulo'] ?? $_GET['accion_modulo'] ?? ''));
 
+if ($accionModulo === 'guardar_estado') {
+	$controlador->guardarEstadoTemporal($_POST);
+	exit;
+}
+
+if ($accionModulo === 'deshacer') {
+	$controlador->deshacerEstado($_POST);
+	exit;
+}
+
+if ($accionModulo === 'rehacer') {
+	$controlador->rehacerEstado($_POST);
+	exit;
+}
+
 if ($accionModulo === 'volver') {
+	$controlador->limpiarHistorial();
 	header('Location: index.php');
 	exit;
 }

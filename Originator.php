@@ -10,12 +10,11 @@ class Originator
         $this->estado = array();
     }
 
-    // Actualizar el estado del Originator con nuevos datos
     public function SetState(array $datos): void
     {
         $this->estado = array(
-            'id_rol' => (int) ($datos['id_rol'] ?? 0),
-            'nombre_rol' => (string) ($datos['nombre_rol'] ?? ''),
+            'id_modulo' => (int)($datos['id_modulo'] ?? 0),
+            'nombre_modulo' => (string)($datos['nombre_modulo'] ?? ''),
         );
     }
 
