@@ -18,6 +18,7 @@ class Caretaker
         }
     }
 
+    // Recibe el objeto Memento y lo guarda ENTERO en la sesión
     public function Add(Memento $memento): void
     {
         $mementos = &$_SESSION['mementos'];
@@ -27,11 +28,11 @@ class Caretaker
             $mementos = array_slice($mementos, 0, $index + 1);
         }
 
-        $mementos[] = $memento->GetState();
+        // Se guarda el objeto Memento completo, respetando la caja negra
+        $mementos[] = $memento;
         $index = count($mementos) - 1;
     }
 
-    // deshacer
     public function GetUndo(): ?Memento
     {
         $mementos = &$_SESSION['mementos'];
@@ -42,15 +43,9 @@ class Caretaker
         }
 
         $index--;
-        $estado = $mementos[$index];
-        if (!is_array($estado)) {
-            $this->limpiar();
-            return null;
-        }
-        return new Memento($estado);
+        return $mementos[$index];
     }
 
-    // rehacer
     public function GetRedo(): ?Memento
     {
         $mementos = &$_SESSION['mementos'];
@@ -61,12 +56,7 @@ class Caretaker
         }
 
         $index++;
-        $estado = $mementos[$index];
-        if (!is_array($estado)) {
-            $this->limpiar();
-            return null;
-        }
-        return new Memento($estado);
+        return $mementos[$index];
     }
 
     public function limpiar(): void
