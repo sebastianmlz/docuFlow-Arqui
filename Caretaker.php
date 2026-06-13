@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/RecepcionMemento.php';
+require_once __DIR__ . '/Memento.php';
 
-class RecepcionCaretaker
+class Caretaker
 {
     public function __construct()
     {
@@ -18,7 +18,7 @@ class RecepcionCaretaker
         }
     }
 
-    public function Add(RecepcionMemento $memento): void
+    public function Add(Memento $memento): void
     {
         $mementos = &$_SESSION['mementos'];
         $index = &$_SESSION['memento_index'];
@@ -32,7 +32,7 @@ class RecepcionCaretaker
     }
 
     // deshacer
-    public function GetUndo(): ?RecepcionMemento
+    public function GetUndo(): ?Memento
     {
         $mementos = &$_SESSION['mementos'];
         $index = &$_SESSION['memento_index'];
@@ -47,11 +47,11 @@ class RecepcionCaretaker
             $this->limpiar();
             return null;
         }
-        return new RecepcionMemento($estado);
+        return new Memento($estado);
     }
 
     // rehacer
-    public function GetRedo(): ?RecepcionMemento
+    public function GetRedo(): ?Memento
     {
         $mementos = &$_SESSION['mementos'];
         $index = &$_SESSION['memento_index'];
@@ -66,7 +66,7 @@ class RecepcionCaretaker
             $this->limpiar();
             return null;
         }
-        return new RecepcionMemento($estado);
+        return new Memento($estado);
     }
 
     public function limpiar(): void

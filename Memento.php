@@ -1,6 +1,6 @@
 <?php
 
-class RecepcionMemento
+class Memento
 {
     private array $estado; 
 

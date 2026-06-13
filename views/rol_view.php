@@ -168,6 +168,21 @@ class rol_view
 					color: #1f2937;
 				}
 
+				.btn-gray {
+					background: #e5e7eb;
+					color: #1f2937;
+				}
+
+				.btn-warning {
+					background: #facc15;
+					color: #1f2937;
+				}
+
+				.btn-info {
+					background: #0ea5e9;
+					color: #fff;
+				}
+
 				table {
 					width: 100%;
 					border-collapse: collapse;
@@ -210,15 +225,18 @@ class rol_view
 					<?php endif; ?>
 
 					<form method="post" action="index.php?accion_usuario=gestion_rol">
-						<input type="hidden" name="accion_rol" value="<?php echo htmlspecialchars($accionGuardar); ?>" />
 						<input type="hidden" name="id_rol" value="<?php echo $this->idSeleccionado; ?>" />
 
 						<label for="txtNombre">txtNombre</label>
 						<div class="form-fila">
 							<input type="text" id="txtNombre" name="nombre_rol" maxlength="60" required
 								value="<?php echo htmlspecialchars($this->nombreSeleccionado); ?>" />
-							<button id="btnGuardar" class="btn btn-primary"
-								type="submit"><?php echo $this->modoEdicion ? 'Actualizar' : 'Guardar'; ?></button>
+							<div class="acciones">
+								<button id="btnGuardar" class="btn btn-primary" type="submit" name="accion_rol" value="<?php echo htmlspecialchars($accionGuardar); ?>"><?php echo $this->modoEdicion ? 'Actualizar' : 'Guardar'; ?></button>
+								<button class="btn btn-gray" type="submit" name="accion_rol" value="guardar_estado" formnovalidate>Guardar borrador</button>
+								<button class="btn btn-warning" type="submit" name="accion_rol" value="deshacer" formnovalidate>Deshacer</button>
+								<button class="btn btn-info" type="submit" name="accion_rol" value="rehacer" formnovalidate>Rehacer</button>
+							</div>
 						</div>
 					</form>
 

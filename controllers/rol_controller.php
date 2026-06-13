@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/../models/rol_model.php';
 require_once __DIR__ . '/../views/rol_view.php';
-// require_once __DIR__ . '/../RecepcionCaretaker.php';
-// require_once __DIR__ . '/../RolOriginator.php';
+require_once __DIR__ . '/../Caretaker.php';
+require_once __DIR__ . '/../Originator.php';
 
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
@@ -23,8 +23,8 @@ class rol_controller
 {
 	private rol_model $mRol;
 	private rol_view $vRol;
-	// private RecepcionCaretaker $caretaker;
-	// private RolOriginator $originator;
+	private Caretaker $caretaker;
+	private Originator $originator;
 	private array $lista;
 	private bool $modoEdicion;
 	private int $idSeleccionado;
@@ -35,8 +35,8 @@ class rol_controller
 		$this->mRol = new rol_model();
 		$this->vRol = new rol_view();
 		$this->lista = array();
-		// $this->caretaker = new RecepcionCaretaker();
-		// $this->originator = new RolOriginator();
+		$this->caretaker = new Caretaker();
+		$this->originator = new Originator();
 		$this->modoEdicion = false;
 		$this->idSeleccionado = 0;
 		$this->nombreSeleccionado = '';
@@ -119,101 +119,101 @@ class rol_controller
 	}
 
 
-	// public function guardarEstadoTemporal(array $datos): void
-	// {
-	// 	$this->originator->SetState($datos);
-	// 	$memento = $this->originator->CreateMemento();
-	// 	$this->caretaker->Add($memento);
-	// 	$estado = $this->originator->GetState();
-	// 	$this->aplicarEstado($estado);
-	// 	$this->listar();
-	// 	$this->sincronizarVista();
-	// 	if ($this->modoEdicion) {
-	// 		$this->vRol->actualizar("Borrador guardado");
+	public function guardarEstadoTemporal(array $datos): void
+	{
+		$this->originator->SetState($datos);
+		$memento = $this->originator->CreateMemento();
+		$this->caretaker->Add($memento);
+		$estado = $this->originator->GetState();
+		$this->aplicarEstado($estado);
+		$this->listar();
+		$this->sincronizarVista();
+		if ($this->modoEdicion) {
+			$this->vRol->actualizar("Borrador guardado");
 
-	// 	}
-	// 	$this->vRol->insertar("Borrador guardado");
-	// }
+		}
+		$this->vRol->insertar("Borrador guardado");
+	}
 
-	// public function deshacerEstado(array $datos): void
-	// {
-	// 	$memento = $this->caretaker->GetUndo();
+	public function deshacerEstado(array $datos): void
+	{
+		$memento = $this->caretaker->GetUndo();
 
-	// 	if ($memento !== null) {
-	// 		$this->originator->RestoreMemento($memento);
-	// 		$msg = 'Estado anterior restaurado.';
-	// 	} else {
-	// 		$this->originator->SetState($datos);
-	// 		$msg = 'No hay estados para deshacer.';
-	// 	}
-	// 	$estado = $this->originator->GetState();
-	// 	$this->aplicarEstado($estado);
-	// 	$this->listar();
-	// 	$this->sincronizarVista();
-	// 	if ($this->modoEdicion) {
-	// 		$this->vRol->actualizar("Borrador guardado");
+		if ($memento !== null) {
+			$this->originator->RestoreMemento($memento);
+			$msg = 'Estado anterior restaurado.';
+		} else {
+			$this->originator->SetState($datos);
+			$msg = 'No hay estados para deshacer.';
+		}
+		$estado = $this->originator->GetState();
+		$this->aplicarEstado($estado);
+		$this->listar();
+		$this->sincronizarVista();
+		if ($this->modoEdicion) {
+			$this->vRol->actualizar("Borrador guardado");
 
-	// 	}
-	// 	$this->vRol->insertar("Borrador guardado");
+		}
+		$this->vRol->insertar("Borrador guardado");
 
-	// }
+	}
 
-	// public function rehacerEstado(array $datos): void
-	// {
-	// 	$memento = $this->caretaker->GetRedo();
+	public function rehacerEstado(array $datos): void
+	{
+		$memento = $this->caretaker->GetRedo();
 
-	// 	if ($memento !== null) {
-	// 		$this->originator->RestoreMemento($memento);
-	// 		$msg = 'Estado futuro restaurado.';
-	// 	} else {
-	// 		$this->originator->SetState($datos);
-	// 		$msg = 'No hay estados para rehacer.';
-	// 	}
-	// 	$estado = $this->originator->GetState();
-	// 	$this->aplicarEstado($estado);
-	// 	$this->listar();
-	// 	$this->sincronizarVista();
-	// 	if ($this->modoEdicion) {
-	// 		$this->vRol->actualizar("Borrador guardado");
+		if ($memento !== null) {
+			$this->originator->RestoreMemento($memento);
+			$msg = 'Estado futuro restaurado.';
+		} else {
+			$this->originator->SetState($datos);
+			$msg = 'No hay estados para rehacer.';
+		}
+		$estado = $this->originator->GetState();
+		$this->aplicarEstado($estado);
+		$this->listar();
+		$this->sincronizarVista();
+		if ($this->modoEdicion) {
+			$this->vRol->actualizar("Borrador guardado");
 
-	// 	}
-	// 	$this->vRol->insertar("Borrador guardado");
-	// }
+		}
+		$this->vRol->insertar("Borrador guardado");
+	}
 
-	// private function aplicarEstado(array $estado): void
-	// {
-	// 	$this->idSeleccionado = (int) ($estado['id_rol'] ?? 0);
-	// 	$this->nombreSeleccionado = (string) ($estado['nombre_rol'] ?? '');
-	// 	$this->modoEdicion = $this->idSeleccionado > 0;
-	// }
+	private function aplicarEstado(array $estado): void
+	{
+		$this->idSeleccionado = (int) ($estado['id_rol'] ?? 0);
+		$this->nombreSeleccionado = (string) ($estado['nombre_rol'] ?? '');
+		$this->modoEdicion = $this->idSeleccionado > 0;
+	}
 
-	// public function limpiarHistorial(): void
-	// {
-	// 	$this->caretaker->limpiar();
-	// }
+	public function limpiarHistorial(): void
+	{
+		$this->caretaker->limpiar();
+	}
 
 }
 
 $controlador = new rol_controller();
 $accionRol = trim((string) ($_POST['accion_rol'] ?? $_GET['accion_rol'] ?? ''));
 
-// if ($accionRol === 'guardar_estado') {
-// 	$controlador->guardarEstadoTemporal($_POST);
-// 	exit;
-// }
+if ($accionRol === 'guardar_estado') {
+	$controlador->guardarEstadoTemporal($_POST);
+	exit;
+}
 
-// if ($accionRol === 'deshacer') {
-// 	$controlador->deshacerEstado($_POST);
-// 	exit;
-// }
+if ($accionRol === 'deshacer') {
+	$controlador->deshacerEstado($_POST);
+	exit;
+}
 
-// if ($accionRol === 'rehacer') {
-// 	$controlador->rehacerEstado($_POST);
-// 	exit;
-// }
+if ($accionRol === 'rehacer') {
+	$controlador->rehacerEstado($_POST);
+	exit;
+}
 
 if ($accionRol === 'volver') {
-	// $controlador->limpiarHistorial();
+	$controlador->limpiarHistorial();
 	header('Location: index.php');
 	exit;
 }
