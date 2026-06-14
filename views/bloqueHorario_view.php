@@ -10,6 +10,8 @@ class bloqueHorario_view
 	public int $idPerSel;
 	public array $lista;
 	public array $listaPeriodos;
+	public string $htmlContenidoListado;
+	public string $accionEstrategia;
 	public string $tituloAccion;
 	public string $colorAlerta;
 
@@ -26,7 +28,9 @@ class bloqueHorario_view
 		int $cuposSel,
 		int $idPerSel,
 		array $lista,
-		array $listaPeriodos
+		array $listaPeriodos,
+		string $htmlContenidoListado,
+		string $accionEstrategia
 	): void {
 		$this->modoEdicion = $modoEdicion;
 		$this->idSel = $idSel;
@@ -36,6 +40,8 @@ class bloqueHorario_view
 		$this->idPerSel = $idPerSel;
 		$this->lista = $lista;
 		$this->listaPeriodos = $listaPeriodos;
+		$this->htmlContenidoListado = $htmlContenidoListado;
+		$this->accionEstrategia = $accionEstrategia;
 	}
 
 	public function listar(array $lista): void
@@ -77,6 +83,8 @@ class bloqueHorario_view
 		$this->idPerSel = 0;
 		$this->lista = array();
 		$this->listaPeriodos = array();
+		$this->htmlContenidoListado = '';
+		$this->accionEstrategia = 'ver_tabla';
 		$this->tituloAccion = 'Registrar Bloque de Horario';
 		$this->colorAlerta = '#eaf2fe';
 	}
@@ -201,6 +209,57 @@ class bloqueHorario_view
 			gap: 8px;
 			flex-wrap: wrap;
 		}
+		.selector-formato {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			margin-bottom: 14px;
+		}
+		.btn-activo {
+			background: #dbeafe;
+			color: #12356b;
+			border: 1px solid #9dc2f7;
+		}
+		.grid-horarios {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+			gap: 12px;
+			margin-top: 16px;
+		}
+		.card-horario {
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			background: #ffffff;
+			padding: 14px;
+		}
+		.card-horario-id {
+			color: var(--muted);
+			font-size: 13px;
+			font-weight: 700;
+			margin-bottom: 6px;
+		}
+		.card-horario-horas {
+			font-size: 24px;
+			font-weight: 700;
+			margin-bottom: 10px;
+		}
+		.card-horario-meta {
+			display: grid;
+			gap: 4px;
+			color: var(--muted);
+			margin-bottom: 12px;
+		}
+		.card-horario-acciones {
+			margin-top: 10px;
+		}
+		.listado-vacio {
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			padding: 12px;
+			margin-top: 16px;
+			color: var(--muted);
+			background: #fcfdff;
+		}
 	</style>
 </head>
 <body>
@@ -213,8 +272,20 @@ class bloqueHorario_view
 				<div class="mensaje" style="background: <?php echo htmlspecialchars($this->colorAlerta); ?>;"><?php echo htmlspecialchars($msg); ?></div>
 			<?php endif; ?>
 
+			<div class="selector-formato">
+				<form method="post" action="index.php?accion_usuario=gestion_bloquehorario">
+					<input type="hidden" name="accion_estrategia" value="ver_tabla" />
+					<button class="btn <?php echo $this->accionEstrategia === 'ver_tabla' ? 'btn-activo' : 'btn-light'; ?>" type="submit">Ver tabla</button>
+				</form>
+				<form method="post" action="index.php?accion_usuario=gestion_bloquehorario">
+					<input type="hidden" name="accion_estrategia" value="ver_tarjetas" />
+					<button class="btn <?php echo $this->accionEstrategia === 'ver_tarjetas' ? 'btn-activo' : 'btn-light'; ?>" type="submit">Ver tarjetas</button>
+				</form>
+			</div>
+
 			<form method="post" action="index.php?accion_usuario=gestion_bloquehorario">
 				<input type="hidden" name="accion_bloque" value="<?php echo htmlspecialchars($accionGuardar); ?>" />
+				<input type="hidden" name="accion_estrategia" value="<?php echo htmlspecialchars($this->accionEstrategia); ?>" />
 				<input type="hidden" name="id_bloque" value="<?php echo $this->idSel; ?>" />
 
 				<div class="form-grid">
@@ -252,63 +323,7 @@ class bloqueHorario_view
 				</div>
 			</form>
 
-			<table>
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Hora Inicio</th>
-						<th>Hora Fin</th>
-						<th>Cupos</th>
-						<th>Periodo</th>
-						<th>Acciones</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if (count($this->lista) === 0): ?>
-						<tr>
-							<td colspan="6">No hay bloques de horario registrados.</td>
-						</tr>
-					<?php else: ?>
-						<?php foreach ($this->lista as $bloque): ?>
-							<?php
-								$id = (int)($bloque['id'] ?? 0);
-								$ini = (string)($bloque['hora_inicio'] ?? '');
-								$fin = (string)($bloque['hora_fin'] ?? '');
-								$cupos = (int)($bloque['cantidad_cupos'] ?? 0);
-								$idPeriodo = (int)($bloque['idperiodo'] ?? 0);
-								// $gestion = (string)($bloque['gestion'] ?? '');
-								$semestre = (string)($bloque['semestre'] ?? '');
-							?>
-							<tr>
-								<td><?php echo $id; ?></td>
-								<td><?php echo htmlspecialchars($ini); ?></td>
-								<td><?php echo htmlspecialchars($fin); ?></td>
-								<td><?php echo $cupos; ?></td>
-								<td><?php echo htmlspecialchars( $semestre); ?></td>
-								<td>
-									<div class="acciones">
-										<form method="post" action="index.php?accion_usuario=gestion_bloquehorario" style="margin:0;">
-											<input type="hidden" name="accion_bloque" value="editar" />
-											<input type="hidden" name="id_bloque" value="<?php echo $id; ?>" />
-											<input type="hidden" name="hora_inicio" value="<?php echo htmlspecialchars($ini); ?>" />
-											<input type="hidden" name="hora_fin" value="<?php echo htmlspecialchars($fin); ?>" />
-											<input type="hidden" name="cantidad_cupos" value="<?php echo $cupos; ?>" />
-											<input type="hidden" name="id_periodo" value="<?php echo $idPeriodo; ?>" />
-											<button class="btn btn-light" type="submit">Editar</button>
-										</form>
-
-										<form method="post" action="index.php?accion_usuario=gestion_bloquehorario" style="margin:0;" onsubmit="return confirm('Deseas eliminar este bloque de horario?');">
-											<input type="hidden" name="accion_bloque" value="eliminar" />
-											<input type="hidden" name="id_bloque" value="<?php echo $id; ?>" />
-											<button class="btn btn-danger" type="submit">Eliminar</button>
-										</form>
-									</div>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-			</table>
+			<?php echo $this->htmlContenidoListado; ?>
 
 			<form method="post" action="index.php?accion_usuario=gestion_bloquehorario" style="margin-top:14px;">
 				<input type="hidden" name="accion_bloque" value="volver" />

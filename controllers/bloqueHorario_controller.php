@@ -2,6 +2,9 @@
 require_once __DIR__ . '/../models/bloqueHorario_model.php';
 require_once __DIR__ . '/../models/periodo_model.php';
 require_once __DIR__ . '/../views/bloqueHorario_view.php';
+require_once __DIR__ . '/../strategies/bloque_horario/ContextoFormatoBloque.php';
+require_once __DIR__ . '/../strategies/bloque_horario/EstrategiaTablaBloque.php';
+require_once __DIR__ . '/../strategies/bloque_horario/EstrategiaTarjetasBloque.php';
 
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
@@ -23,8 +26,11 @@ class bloqueHorario_controller
 	private bloqueHorario_model $mBloque;
 	private periodo_model $mPeriodo;
 	private bloqueHorario_view $vBloque;
+	private ContextoFormatoBloque $contexto;
 	private array $lista;
 	private array $listaPeriodos;
+	private string $htmlContenidoListado;
+	private string $accionEstrategia;
 	private bool $modoEdicion;
 	private int $idSel;
 	private string $iniSel;
@@ -39,12 +45,15 @@ class bloqueHorario_controller
 		$this->vBloque = new bloqueHorario_view();
 		$this->lista = array();
 		$this->listaPeriodos = array();
+		$this->htmlContenidoListado = '';
+		$this->contexto = new ContextoFormatoBloque(new EstrategiaTablaBloque());
 		$this->modoEdicion = false;
 		$this->idSel = 0;
 		$this->iniSel = '';
 		$this->finSel = '';
 		$this->cuposSel = 1;
 		$this->idPerSel = 0;
+		$this->configurarEstrategia();
 	}
 
 	public function iniciar(): void
@@ -130,6 +139,8 @@ class bloqueHorario_controller
 
 	private function sincronizarVista(): void
 	{
+		$this->htmlContenidoListado = $this->contexto->doSomething($this->lista);
+
 		$this->vBloque->sincronizar(
 			$this->modoEdicion,
 			$this->idSel,
@@ -138,8 +149,26 @@ class bloqueHorario_controller
 			$this->cuposSel,
 			$this->idPerSel,
 			$this->lista,
-			$this->listaPeriodos
+			$this->listaPeriodos,
+			$this->htmlContenidoListado,
+			$this->accionEstrategia
 		);
+	}
+
+	private function configurarEstrategia(): void
+	{
+		$accion = trim((string)($_POST['accion_estrategia'] ?? $_GET['accion_estrategia'] ?? ($_SESSION['accion_estrategia_bloque'] ?? 'ver_tabla')));
+
+		if ($accion !== 'ver_tarjetas') {
+			$accion = 'ver_tabla';
+		}
+
+		$_SESSION['accion_estrategia_bloque'] = $accion;
+		$this->accionEstrategia = $accion;
+		$estrategia = $accion === 'ver_tarjetas'
+			? new EstrategiaTarjetasBloque()
+			: new EstrategiaTablaBloque();
+		$this->contexto->setStrategy($estrategia);
 	}
 }
 
