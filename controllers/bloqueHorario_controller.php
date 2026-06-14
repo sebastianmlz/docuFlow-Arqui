@@ -2,9 +2,10 @@
 require_once __DIR__ . '/../models/bloqueHorario_model.php';
 require_once __DIR__ . '/../models/periodo_model.php';
 require_once __DIR__ . '/../views/bloqueHorario_view.php';
-require_once __DIR__ . '/../strategies/bloque_horario/ContextoFormatoBloque.php';
-require_once __DIR__ . '/../strategies/bloque_horario/EstrategiaTablaBloque.php';
-require_once __DIR__ . '/../strategies/bloque_horario/EstrategiaTarjetasBloque.php';
+require_once __DIR__ . '/../strategies/bloque_horario/ContextoOrdenBloque.php';
+require_once __DIR__ . '/../strategies/bloque_horario/OrdenCronologicoAsc.php';
+require_once __DIR__ . '/../strategies/bloque_horario/OrdenMayorCupos.php';
+require_once __DIR__ . '/../strategies/bloque_horario/OrdenMenorCupos.php';
 
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
@@ -26,11 +27,10 @@ class bloqueHorario_controller
 	private bloqueHorario_model $mBloque;
 	private periodo_model $mPeriodo;
 	private bloqueHorario_view $vBloque;
-	private ContextoFormatoBloque $contexto;
+	private ContextoOrdenBloque $contexto;
 	private array $lista;
 	private array $listaPeriodos;
-	private string $htmlContenidoListado;
-	private string $accionEstrategia;
+	private string $accionOrden;
 	private bool $modoEdicion;
 	private int $idSel;
 	private string $iniSel;
@@ -45,8 +45,7 @@ class bloqueHorario_controller
 		$this->vBloque = new bloqueHorario_view();
 		$this->lista = array();
 		$this->listaPeriodos = array();
-		$this->htmlContenidoListado = '';
-		$this->contexto = new ContextoFormatoBloque(new EstrategiaTablaBloque());
+		$this->contexto = new ContextoOrdenBloque(new OrdenCronologicoAsc());
 		$this->modoEdicion = false;
 		$this->idSel = 0;
 		$this->iniSel = '';
@@ -139,7 +138,7 @@ class bloqueHorario_controller
 
 	private function sincronizarVista(): void
 	{
-		$this->htmlContenidoListado = $this->contexto->doSomething($this->lista);
+		$this->lista = $this->contexto->ejecutarOrden($this->lista);
 
 		$this->vBloque->sincronizar(
 			$this->modoEdicion,
@@ -150,24 +149,29 @@ class bloqueHorario_controller
 			$this->idPerSel,
 			$this->lista,
 			$this->listaPeriodos,
-			$this->htmlContenidoListado,
-			$this->accionEstrategia
+			$this->accionOrden
 		);
 	}
 
 	private function configurarEstrategia(): void
 	{
-		$accion = trim((string)($_POST['accion_estrategia'] ?? $_GET['accion_estrategia'] ?? ($_SESSION['accion_estrategia_bloque'] ?? 'ver_tabla')));
+		$accion = trim((string)($_POST['accion_orden'] ?? $_GET['accion_orden'] ?? ($_SESSION['accion_orden_bloque'] ?? 'cronologico_asc')));
 
-		if ($accion !== 'ver_tarjetas') {
-			$accion = 'ver_tabla';
+		if (!in_array($accion, array('cronologico_asc', 'mayor_cupos', 'menor_cupos'), true)) {
+			$accion = 'cronologico_asc';
 		}
 
-		$_SESSION['accion_estrategia_bloque'] = $accion;
-		$this->accionEstrategia = $accion;
-		$estrategia = $accion === 'ver_tarjetas'
-			? new EstrategiaTarjetasBloque()
-			: new EstrategiaTablaBloque();
+		$_SESSION['accion_orden_bloque'] = $accion;
+		$this->accionOrden = $accion;
+
+		if ($accion === 'mayor_cupos') {
+			$estrategia = new OrdenMayorCupos();
+		} elseif ($accion === 'menor_cupos') {
+			$estrategia = new OrdenMenorCupos();
+		} else {
+			$estrategia = new OrdenCronologicoAsc();
+		}
+
 		$this->contexto->setStrategy($estrategia);
 	}
 }
