@@ -3,26 +3,29 @@ require_once __DIR__ . '/Memento.php';
 
 class Caretaker
 {
+    private string $claveMementos = 'mementos_formulario';
+    private string $claveIndice = 'memento_formulario_index';
+
     public function __construct()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        if (!isset($_SESSION['mementos']) || !is_array($_SESSION['mementos'])) {
-            $_SESSION['mementos'] = array();
+        if (!isset($_SESSION[$this->claveMementos]) || !is_array($_SESSION[$this->claveMementos])) {
+            $_SESSION[$this->claveMementos] = array();
         }
 
-        if (!isset($_SESSION['memento_index']) || !is_int($_SESSION['memento_index'])) {
-            $_SESSION['memento_index'] = -1;
+        if (!isset($_SESSION[$this->claveIndice]) || !is_int($_SESSION[$this->claveIndice])) {
+            $_SESSION[$this->claveIndice] = -1;
         }
     }
 
     // Recibe el objeto Memento y lo guarda ENTERO en la sesión
     public function Add(Memento $memento): void
     {
-        $mementos = &$_SESSION['mementos'];
-        $index = &$_SESSION['memento_index'];
+        $mementos = &$_SESSION[$this->claveMementos];
+        $index = &$_SESSION[$this->claveIndice];
 
         if ($index >= 0 && $index < count($mementos) - 1) {
             $mementos = array_slice($mementos, 0, $index + 1);
@@ -35,8 +38,8 @@ class Caretaker
 
     public function GetUndo(): ?Memento
     {
-        $mementos = &$_SESSION['mementos'];
-        $index = &$_SESSION['memento_index'];
+        $mementos = &$_SESSION[$this->claveMementos];
+        $index = &$_SESSION[$this->claveIndice];
 
         if ($index <= 0) {
             return null;
@@ -48,8 +51,8 @@ class Caretaker
 
     public function GetRedo(): ?Memento
     {
-        $mementos = &$_SESSION['mementos'];
-        $index = &$_SESSION['memento_index'];
+        $mementos = &$_SESSION[$this->claveMementos];
+        $index = &$_SESSION[$this->claveIndice];
 
         if ($index >= count($mementos) - 1) {
             return null;
@@ -61,7 +64,7 @@ class Caretaker
 
     public function limpiar(): void
     {
-        $_SESSION['mementos'] = array();
-        $_SESSION['memento_index'] = -1;
+        $_SESSION[$this->claveMementos] = array();
+        $_SESSION[$this->claveIndice] = -1;
     }
 }

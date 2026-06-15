@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/../models/modulo_model.php';
 require_once __DIR__ . '/../views/modulo_view.php';
-require_once __DIR__ . '/../Caretaker.php';
-require_once __DIR__ . '/../Originator.php';
+require_once __DIR__ . '/../memento/Caretaker.php';
+require_once __DIR__ . '/../memento/Originator.php';
 
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();

@@ -12,10 +12,7 @@ class Originator
 
     public function SetState(array $datos): void
     {
-        $this->estado = array(
-            'id_modulo' => (int)($datos['id_modulo'] ?? 0),
-            'nombre_modulo' => (string)($datos['nombre_modulo'] ?? ''),
-        );
+        $this->estado = $datos;
     }
 
     public function GetState(): array
