@@ -8,7 +8,7 @@ class ContextoOrdenBloque
 	public function __construct(string $tipoInicial)
 	{
 		// El constructor recibe el texto inicial y usa el traductor interno
-		$this->cambiarEstrategiaPorTexto($tipoInicial);
+		$this->ordenar($tipoInicial);
 	}
 
 	// 1. CUMPLE AL 100% CON LA FIRMA DEL DOCENTE: Recibe el objeto abstracto general
@@ -19,7 +19,7 @@ class ContextoOrdenBloque
 
 	// 2. MÉTODO AUXILIAR: Centraliza los "new" aquí para no ensuciar el controlador
 	// ni romper la firma orientada a objetos de setStrategy
-	public function cambiarEstrategiaPorTexto(string $tipo): void
+	public function ordenar(string $tipo): void
 	{
 		if ($tipo === 'mayor_cupos') {
 			require_once __DIR__ . '/OrdenMayorCupos.php';

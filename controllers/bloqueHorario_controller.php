@@ -164,9 +164,7 @@ class bloqueHorario_controller
         $_SESSION['accion_orden_bloque'] = $accion;
         $this->accionOrden = $accion;
 
-        // El controlador le pasa el string al traductor del contexto.
-        // Cero operadores "new" en el controlador.
-        $this->contexto->cambiarEstrategiaPorTexto($accion);
+        $this->contexto->ordenar($accion);
     }
 }
 
