@@ -3,8 +3,8 @@ require_once __DIR__ . '/Memento.php';
 
 class Caretaker
 {
-    private string $claveMementos = 'mementos_formulario';
-    private string $claveIndice = 'memento_formulario_index';
+    private string $mementos = 'mementos_modulo';
+    private string $memento_index = 'memento_index_modulo';
 
     public function __construct()
     {
@@ -12,34 +12,33 @@ class Caretaker
             session_start();
         }
 
-        if (!isset($_SESSION[$this->claveMementos]) || !is_array($_SESSION[$this->claveMementos])) {
-            $_SESSION[$this->claveMementos] = array();
+        if (!isset($_SESSION[$this->mementos]) || !is_array($_SESSION[$this->mementos])) {
+            $_SESSION[$this->mementos] = array();
         }
 
-        if (!isset($_SESSION[$this->claveIndice]) || !is_int($_SESSION[$this->claveIndice])) {
-            $_SESSION[$this->claveIndice] = -1;
+        if (!isset($_SESSION[$this->memento_index]) || !is_int($_SESSION[$this->memento_index])) {
+            $_SESSION[$this->memento_index] = -1;
         }
     }
 
-    // Recibe el objeto Memento y lo guarda ENTERO en la sesión
+    // Recibe objeto Memento y lo guarda 
     public function Add(Memento $memento): void
     {
-        $mementos = &$_SESSION[$this->claveMementos];
-        $index = &$_SESSION[$this->claveIndice];
+        $mementos = &$_SESSION[$this->mementos];
+        $index = &$_SESSION[$this->memento_index];
 
         if ($index >= 0 && $index < count($mementos) - 1) {
             $mementos = array_slice($mementos, 0, $index + 1);
         }
 
-        // Se guarda el objeto Memento completo, respetando la caja negra
         $mementos[] = $memento;
         $index = count($mementos) - 1;
     }
 
     public function GetUndo(): ?Memento
     {
-        $mementos = &$_SESSION[$this->claveMementos];
-        $index = &$_SESSION[$this->claveIndice];
+        $mementos = &$_SESSION[$this->mementos];
+        $index = &$_SESSION[$this->memento_index];
 
         if ($index <= 0) {
             return null;
@@ -51,8 +50,8 @@ class Caretaker
 
     public function GetRedo(): ?Memento
     {
-        $mementos = &$_SESSION[$this->claveMementos];
-        $index = &$_SESSION[$this->claveIndice];
+        $mementos = &$_SESSION[$this->mementos];
+        $index = &$_SESSION[$this->memento_index];
 
         if ($index >= count($mementos) - 1) {
             return null;
@@ -64,7 +63,7 @@ class Caretaker
 
     public function limpiar(): void
     {
-        $_SESSION[$this->claveMementos] = array();
-        $_SESSION[$this->claveIndice] = -1;
+        $_SESSION[$this->mementos] = array();
+        $_SESSION[$this->memento_index] = -1;
     }
 }

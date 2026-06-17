@@ -3,7 +3,6 @@ require_once __DIR__ . '/../models/bloqueHorario_model.php';
 require_once __DIR__ . '/../models/periodo_model.php';
 require_once __DIR__ . '/../views/bloqueHorario_view.php';
 require_once __DIR__ . '/../strategies/ContextoOrdenBloque.php';
-// NOTA: Se eliminaron los require_once de las estrategias concretas para evitar acoplamiento directo.
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -14,7 +13,7 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-$rolSesion = strtolower((string)($_SESSION['usuario_rol'] ?? ''));
+$rolSesion = strtolower((string) ($_SESSION['usuario_rol'] ?? ''));
 if ($rolSesion !== 'administrador') {
     header('Location: index.php');
     exit;
@@ -43,9 +42,9 @@ class bloqueHorario_controller
         $this->vBloque = new bloqueHorario_view();
         $this->lista = array();
         $this->listaPeriodos = array();
-        
+
         $this->contexto = new ContextoOrdenBloque('cronologico_asc');
-        
+
         $this->modoEdicion = false;
         $this->idSel = 0;
         $this->iniSel = '';
@@ -128,18 +127,17 @@ class bloqueHorario_controller
     public function editar(int $id, string $ini, string $fin, int $cupos, int $idPer): void
     {
         $this->modoEdicion = true;
-        $this->idSel = (int)$id;
-        $this->iniSel = (string)$ini;
-        $this->finSel = (string)$fin;
-        $this->cuposSel = (int)$cupos;
-        $this->idPerSel = (int)$idPer;
+        $this->idSel = (int) $id;
+        $this->iniSel = (string) $ini;
+        $this->finSel = (string) $fin;
+        $this->cuposSel = (int) $cupos;
+        $this->idPerSel = (int) $idPer;
         $this->iniciar();
     }
 
     private function sincronizarVista(): void
     {
-        $this->lista = $this->contexto->ejecutarOrden($this->lista);
-
+        $this->lista = $this->contexto->ordenar($this->lista);
         $this->vBloque->sincronizar(
             $this->modoEdicion,
             $this->idSel,
@@ -155,7 +153,7 @@ class bloqueHorario_controller
 
     private function configurarEstrategia(): void
     {
-        $accion = trim((string)($_POST['accion_orden'] ?? $_GET['accion_orden'] ?? ($_SESSION['accion_orden_bloque'] ?? 'cronologico_asc')));
+        $accion = trim((string) ($_POST['accion_orden'] ?? $_GET['accion_orden'] ?? ($_SESSION['accion_orden_bloque'] ?? 'cronologico_asc')));
 
         if (!in_array($accion, array('cronologico_asc', 'mayor_cupos', 'menor_cupos'), true)) {
             $accion = 'cronologico_asc';
@@ -164,12 +162,12 @@ class bloqueHorario_controller
         $_SESSION['accion_orden_bloque'] = $accion;
         $this->accionOrden = $accion;
 
-        $this->contexto->ordenar($accion);
+        $this->contexto->establecerEstrategiaPorTexto($accion);
     }
 }
 
 $controlador = new bloqueHorario_controller();
-$accionBloque = trim((string)($_POST['accion_bloque'] ?? $_GET['accion_bloque'] ?? ''));
+$accionBloque = trim((string) ($_POST['accion_bloque'] ?? $_GET['accion_bloque'] ?? ''));
 
 if ($accionBloque === 'volver') {
     header('Location: index.php');
@@ -177,36 +175,36 @@ if ($accionBloque === 'volver') {
 }
 
 if ($accionBloque === 'insertar') {
-    $ini = trim((string)($_POST['hora_inicio'] ?? ''));
-    $fin = trim((string)($_POST['hora_fin'] ?? ''));
-    $cupos = (int)($_POST['cantidad_cupos'] ?? 0);
-    $idPer = (int)($_POST['id_periodo'] ?? 0);
+    $ini = trim((string) ($_POST['hora_inicio'] ?? ''));
+    $fin = trim((string) ($_POST['hora_fin'] ?? ''));
+    $cupos = (int) ($_POST['cantidad_cupos'] ?? 0);
+    $idPer = (int) ($_POST['id_periodo'] ?? 0);
     $controlador->insertar($ini, $fin, $cupos, $idPer);
     exit;
 }
 
 if ($accionBloque === 'actualizar') {
-    $id = (int)($_POST['id_bloque'] ?? 0);
-    $ini = trim((string)($_POST['hora_inicio'] ?? ''));
-    $fin = trim((string)($_POST['hora_fin'] ?? ''));
-    $cupos = (int)($_POST['cantidad_cupos'] ?? 0);
-    $idPer = (int)($_POST['id_periodo'] ?? 0);
+    $id = (int) ($_POST['id_bloque'] ?? 0);
+    $ini = trim((string) ($_POST['hora_inicio'] ?? ''));
+    $fin = trim((string) ($_POST['hora_fin'] ?? ''));
+    $cupos = (int) ($_POST['cantidad_cupos'] ?? 0);
+    $idPer = (int) ($_POST['id_periodo'] ?? 0);
     $controlador->actualizar($id, $ini, $fin, $cupos, $idPer);
     exit;
 }
 
 if ($accionBloque === 'eliminar') {
-    $id = (int)($_POST['id_bloque'] ?? 0);
+    $id = (int) ($_POST['id_bloque'] ?? 0);
     $controlador->eliminar($id);
     exit;
 }
 
 if ($accionBloque === 'editar') {
-    $id = (int)($_POST['id_bloque'] ?? 0);
-    $ini = trim((string)($_POST['hora_inicio'] ?? ''));
-    $fin = trim((string)($_POST['hora_fin'] ?? ''));
-    $cupos = (int)($_POST['cantidad_cupos'] ?? 0);
-    $idPer = (int)($_POST['id_periodo'] ?? 0);
+    $id = (int) ($_POST['id_bloque'] ?? 0);
+    $ini = trim((string) ($_POST['hora_inicio'] ?? ''));
+    $fin = trim((string) ($_POST['hora_fin'] ?? ''));
+    $cupos = (int) ($_POST['cantidad_cupos'] ?? 0);
+    $idPer = (int) ($_POST['id_periodo'] ?? 0);
     $controlador->editar($id, $ini, $fin, $cupos, $idPer);
     exit;
 }

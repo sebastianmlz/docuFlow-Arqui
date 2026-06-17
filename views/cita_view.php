@@ -14,7 +14,6 @@ class cita_view
 	public int $idCitaRecepcion = 0;
 	public string $tituloAccion;
 	public string $colorAlerta;
-	public array $datosRestaurados;
 
 	public function __construct()
 	{
@@ -28,7 +27,6 @@ class cita_view
 		$this->recepcionAbierta = false;
 		$this->tituloAccion = 'Gestionar Cita';
 		$this->colorAlerta = '#eaf2fe';
-		$this->datosRestaurados = array();
 	}
 
 	public function sincronizar(array $datos): void
@@ -43,7 +41,6 @@ class cita_view
 		$this->recepcionAbierta = (bool)($datos['recepcionAbierta'] ?? false);
 		$this->citaActiva = (array)($datos['citaActiva'] ?? array());
 		$this->idCitaRecepcion = (int)($datos['idCitaRecepcion'] ?? 0);
-		$this->datosRestaurados = (array)($datos['datosRestaurados'] ?? array());
 	}
 
 	public function listar(array $lista): void
@@ -78,7 +75,6 @@ class cita_view
 	private function render(string $msg): void
 	{
 		$ruta = $this->vistaEjecutivo ? 'gestion_cita' : 'mis_citas';
-		$datosRestaurados = $this->datosRestaurados;
 		?>
 <!DOCTYPE html>
 <html lang="es">
@@ -320,23 +316,18 @@ class cita_view
 									<?php
 										$idDoc = (int)($doc['id'] ?? 0);
 										$nombreDoc = (string)($doc['nombre'] ?? '');
-										$entregaRestaurada = !empty($datosRestaurados['entrega'][$idDoc]);
-										$obsRestaurada = (string)($datosRestaurados['obs'][$idDoc] ?? '');
 									?>
 									<tr>
 										<td><?php echo htmlspecialchars($nombreDoc); ?></td>
-										<td><input type="checkbox" name="entrega[<?php echo $idDoc; ?>]" value="1" <?php echo $entregaRestaurada ? 'checked' : ''; ?> /></td>
-										<td><textarea name="obs[<?php echo $idDoc; ?>]" placeholder="Observacion"><?php echo htmlspecialchars($obsRestaurada); ?></textarea></td>
+										<td><input type="checkbox" name="entrega[<?php echo $idDoc; ?>]" value="1" /></td>
+										<td><textarea name="obs[<?php echo $idDoc; ?>]" placeholder="Observacion"></textarea></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
 						</table>
 
 						<div class="acciones" style="margin-top:12px;">
-							<button class="btn btn-gray" type="submit" name="action" value="guardar_estado">Guardar borrador</button>
-							<button class="btn btn-warning" type="submit" name="action" value="deshacer">Deshacer</button>
-							<button class="btn btn-info" type="submit" name="action" value="rehacer">Rehacer</button>
-							<button class="btn btn-success" type="submit" name="action" value="guardar_recepcion">Guardar recepcion</button>
+							<button class="btn btn-success" type="submit" name="accion_cita" value="guardar_recepcion">Guardar recepcion</button>
 						</div>
 					</form>
 
